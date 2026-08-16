@@ -1,0 +1,27 @@
+{
+	"name": "@rossiam/range",
+	"version": "1.0.0",
+	"description": "a small, lazy, immutable numeric range for TypeScript",
+	"license": "Apache-2.0",
+	"imports": {
+		"@std/assert": "jsr:@std/assert@^1.0.19"
+	},
+	"exports": {
+		".": "./mod.ts"
+	},
+	"publish": {
+		"include": [
+			"mod.ts",
+			"README.adoc",
+			"LICENSE"
+		]
+	},
+	"fmt": {
+		"useTabs": true,
+		"lineWidth": 100,
+		"indentWidth": 4,
+		"semiColons": false,
+		"proseWrap": "preserve",
+		"singleQuote": true
+	}
+}

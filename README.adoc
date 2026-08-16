@@ -1,0 +1,158 @@
+= range
+
+A small, lazy, immutable numeric range for TypeScript.
+
+`range(start, end)` gives you an iterable you can spread, loop over, or map --
+with inclusive/exclusive boundaries on both ends, fractional and negative steps,
+and a configurable tolerance so floating-point rounding errors don't cost you an
+element at the end.
+
+== Install
+
+Deno:
+
+[source,shell]
+----
+deno add jsr:@rossiam/range
+----
+
+For node projects, refer to https://jsr.io/docs/with/node.
+
+== Quick start
+
+[source,typescript]
+----
+import { range } from '@rossiam/range'
+
+console.log([...range(0, 5)]) // [0, 1, 2, 3, 4]
+
+for (const index of range(0, 3)) {
+	console.log(index) // 0, then 1, then 2
+}
+
+const sum = [...range(1, 101)].reduce((total, num) => total + num, 0) // 5050
+----
+
+The start is included and the end is excluded by default, matching `Array`
+indexing and most `for` loops.
+
+== Boundaries
+
+Either end can be made inclusive or exclusive independently.
+
+[source,typescript]
+----
+[...range(0, 5)]                                 // [0, 1, 2, 3, 4]  (default)
+[...range(1, 5, { endInclusive: true })]         // [1, 2, 3, 4, 5]
+[...range(0, 5, { startInclusive: false })]      // [1, 2, 3, 4]
+
+[...range(0, 5, { startInclusive: false, endInclusive: true })]
+                                                 // [1, 2, 3, 4, 5]
+----
+
+== Steps
+
+Steps can be fractional or negative. A negative step counts down.
+
+[source,typescript]
+----
+[...range(0, 10, { step: 2 })]    // [0, 2, 4, 6, 8]
+[...range(0, 1, { step: 0.25 })]  // [0, 0.25, 0.5, 0.75]
+[...range(5, 0, { step: -1 })]    // [5, 4, 3, 2, 1]
+----
+
+A range that can never reach its end is simply empty -- it is not an error:
+
+[source,typescript]
+----
+[...range(0, 5, { step: -1 })]  // []  (stepping away from the end)
+[...range(10, 1)]               // []  (end is behind the start)
+[...range(0, 3, { step: 10 })]  // [0] (one step overshoots)
+----
+
+== Mapping
+
+`map` is lazy, reusable, and chainable. Nothing runs until you iterate, and
+iterating again re-runs the mapping, so a mapped value is as reusable as the
+range it came from.
+
+[source,typescript]
+----
+[...range(1, 4).map(num => num * num)]                        // [1, 4, 9]
+[...range(1, 4).map(num => num * num).map(num => `#${num}`)]    // ['#1', '#4', '#9']
+
+const labels = range(1, 4).map(num => `item ${num}`)
+[...labels]  // ['item 1', 'item 2', 'item 3']
+[...labels]  // ['item 1', 'item 2', 'item 3']  -- same again
+----
+
+Because it is lazy, mapping a large or unbounded range costs nothing until you
+consume it, and the callback is never invoked for a range that turns out to be
+empty.
+
+== Floating-point tolerance
+
+To avoid issues with inexact floating point numbers, you can use
+https://jsr.io/@rossiam/range/doc/~/RangeOptions.minDifferenceConsideredEqual[`minDifferenceConsideredEqual`],
+which defaults to `1e-9`.
+
+== Unbounded ranges
+
+The end may be `Infinity` or `-Infinity`. Because ranges are lazy, an unbounded
+range is possible. Don't try to make an array out of it though. 😂
+
+[source,typescript]
+----
+const evens = range(0, Infinity, { step: 2 })
+
+for (const num of evens) {
+	if (num > 10) break
+	console.log(num) // 0, 2, 4, 6, 8, 10
+}
+----
+
+== Ranges are values
+
+A range is frozen, reusable, and describes itself.
+
+[source,typescript]
+----
+const indexes = range(3, 6)
+
+indexes.start                        // 3
+indexes.end                          // 6
+indexes.step                         // 1
+indexes.startInclusive               // true
+indexes.endInclusive                 // false
+indexes.minDifferenceConsideredEqual // 1e-9
+
+[...indexes] // [3, 4, 5]
+[...indexes] // [3, 4, 5]  -- iterating does not consume it
+
+Object.isFrozen(indexes) // true
+indexes.start = 100      // TypeError in strict mode
+----
+
+`toString` renders the boundaries as `I` for inclusive and `E` for exclusive,
+around the step:
+
+[source,typescript]
+----
+`${range(3, 6)}`                                                // '3I:1:6E'
+`${range(3, 6, { startInclusive: false, endInclusive: true })}` // '3E:1:6I'
+`${range(6, 3, { step: -1 })}`                                  // '6I:-1:3E'
+----
+
+== API reference
+
+Generated from the source and published at https://jsr.io/@rossiam/range/doc,
+covering `range`, `RangeOptions`, `Range`, and `Mappable`, along with every
+default and the `RangeError` thrown for each kind of invalid input. The same
+text drives editor completions and hover.
+
+One thing worth knowing up front: `range` throws on invalid input rather than
+returning an empty range. An empty result is always a genuinely empty range.
+
+== License
+
+Apache-2.0. See link:LICENSE[LICENSE].
